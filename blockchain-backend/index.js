@@ -38,14 +38,16 @@ app.get('/', (req, res) => { // new
 
 app.get('/getBalance', (req, res) => { // new
     console.log(req.query.account_id);
-    var myContract = new web3.eth.Contract(contracts.abi, '0xfDD639cE320B54aAd7095Fb32C1f39641b014Edd', {
+    var myContract = new web3.eth.Contract(contracts.abi,  process.env.CONTRACTS_ADDRESS, {
         from: req.query.account_id, // default from address
         gasPrice: '3000000' // default gas price in wei, 20 gwei in this case
     });
     myContract.methods.balance().call({from: req.query.account_id,gasPrice: '3000000'})
     .then(function(result){
-        console.log(result)
-        res.send(result);
+        console.log(result+' wei')
+        res.header('Access-Control-Allow-Origin', "*");
+        res.header('Access-Control-Allow-Headers', "*");
+        res.send(result+' wei');
     }).catch(err => {
         console.log(err)
         res.send(err);
@@ -54,6 +56,7 @@ app.get('/getBalance', (req, res) => { // new
 });
 
 app.get('/withdraw', (req, res) => { // new
+    console.log('--Req Params--')
     console.log(req.query.account_id);
     console.log(req.query.amount);
     console.log(process.env.CONTRACTS_ADDRESS)
@@ -61,14 +64,23 @@ app.get('/withdraw', (req, res) => { // new
         from: req.query.account_id, // default from address
         gasPrice: '3000000' // default gas price in wei, 20 gwei in this case
     });
-    myContract.methods.balance().call({from: req.query.account_id,gasPrice: '3000000'})
+    myContract.methods.withdraw(req.query.amount).send({from: req.query.account_id,gasPrice: '3000000'})
     .then(function(result){
+        
         console.log(result)
-        res.send(result);
-    }).catch(err => {
-        console.log(err)
-        res.send(err);
-    });
+        myContract.methods.balance().call({from: req.query.account_id,gasPrice: '3000000'})
+        .then(function(balance){
+            console.log("Check Balance ",balance)
+            res.header('Access-Control-Allow-Origin', "*");
+            res.header('Access-Control-Allow-Headers', "*");
+            res.send(balance+" wei");
+        }).catch(err => {
+            console.log(err)
+            res.header('Access-Control-Allow-Origin', "*");
+            res.header('Access-Control-Allow-Headers', "*");
+            res.send('Transaction Failure! Balance Update failed');
+        });
+    }).catch(err => console.log(err));
     
 });
 
@@ -76,26 +88,64 @@ app.get('/transfer', (req, res) => { // new
     console.log(req.query.account_id);
     console.log(req.query.amount);
     console.log(req.query.to_account);
+    console.log(process.env.CONTRACTS_ADDRESS)
     var myContract = new web3.eth.Contract(contracts.abi, process.env.CONTRACTS_ADDRESS, {
         from: req.query.account_id, // default from address
         gasPrice: '3000000' // default gas price in wei, 20 gwei in this case
     });
-    myContract.methods.withdraw(req.query.to_account,req.query.amount).call({from: req.query.account_id,gasPrice: '3000000'})
+   
+    myContract.methods.transfer(req.query.to_account,req.query.amount).send({from: req.query.account_id,gasPrice: '300'})
     .then(function(result){
-        console.log(result)
-        myContract.methods.balance().call({from: req.query.account_id,gasPrice: '3000000'})
-        .then(function(result){
-            console.log(result)
-            res.send(result);
+        console.log("After Transfer",result)
+        myContract.methods.balance().call({from: req.query.account_id,gasPrice: '300'})
+        .then(function(balance){
+            console.log("Check Balance ",balance)
+            res.header('Access-Control-Allow-Origin', "*");
+            res.header('Access-Control-Allow-Headers', "*");
+            res.send(balance+" wei");
         }).catch(err => {
             console.log(err)
+            res.header('Access-Control-Allow-Origin', "*");
+            res.header('Access-Control-Allow-Headers', "*");
             res.send('Transaction Failure! Balance Update failed');
         });
+        myContract.methods.balance().call({from: req.query.to_account,gasPrice: '300'})
+        .then(function(balance){
+            console.log("Reciever Account Balance ",balance)
+            
+        }).catch(err => {
+            console.log(err)
+           
+        });
+        //res.send(result);
     }).catch(err => {
         console.log(err)
         res.send("Transaction Failure! Transfer failed")
     });
     
 });
+app.get('/getTransactions', (req, res) => { // new
+    console.log(req.query.account_id);
+    var myContract = new web3.eth.Contract(contracts.abi,  process.env.CONTRACTS_ADDRESS, {
+        from: req.query.account_id, // default from address
+        gasPrice: '3000000' // default gas price in wei, 20 gwei in this case
+    });
+    web3.eth.getTransactionCount(req.query.account_id)
+ .then((b=console.log)=>{
+    console.log(b)
+    for(var i=0;i<b;i++){
+            web3.eth.getBlock(b-i).then((Block)=>
+            {
 
-app.listen(8080, () => console.log('listening on port 8080'));
+            a =[ Block.hash]
+                     console.log(a);
+                 var  iterator =a.values()
+                 for (let elements of iterator) { 
+                  web3.eth.getTransactionFromBlock(elements).then(console.log)
+                } 
+             });
+         }
+         });
+    
+});
+app.listen(8000, () => console.log('listening on port 8000'));

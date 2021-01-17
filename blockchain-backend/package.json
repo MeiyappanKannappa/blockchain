@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": " CONTRACTS_ADDRESS=0xfDD639cE320B54aAd7095Fb32C1f39641b014Edd && node index.js"
+    "start": " CONTRACTS_ADDRESS=0x75342e34F3a941d726b33B26c602220564282644 node index.js"
   },
   "author": "",
   "license": "ISC",
